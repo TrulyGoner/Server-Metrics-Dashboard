@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed } from 'vue'
 import { Filler } from 'chart.js'
 import { Line } from 'vue-chartjs'
@@ -13,7 +13,7 @@ import {
   Legend,
   type ChartOptions,
 } from 'chart.js'
-import type { MetricPoint } from '@/types/metrics'
+import type { MetricPoint } from '@/entities/server'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler)
 
@@ -22,7 +22,7 @@ const props = defineProps<{
 }>()
 
 const chartData = computed(() => ({
-  labels: props.metrics.map((_, i) => `-${props.metrics.length - i}s`),
+  labels: props.metrics.map((_, i) => `${props.metrics.length - i}s`),
   datasets: [
     {
       label: 'CPU %',
@@ -52,7 +52,10 @@ const chartOptions: ChartOptions<'line'> = {
     y: {
       min: 0,
       max: 100,
-      ticks: { stepSize: 20 },
+      ticks: { 
+        stepSize: 20,
+        callback: (value: string | number) => `${value}%`,
+      },
     },
     x: {
       ticks: { maxTicksLimit: 10 },
@@ -77,7 +80,10 @@ const chartOptions: ChartOptions<'line'> = {
 
 <template>
   <div class="chart">
-    <Line :data="chartData" :options="chartOptions" />
+    <Line
+      :data="chartData"
+      :options="chartOptions"
+    />
   </div>
 </template>
 

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 defineProps<{
   connected: boolean
 }>()
@@ -18,7 +18,7 @@ defineProps<{
   gap: 6px;
   padding: 4px 12px;
   border-radius: 20px;
-  font-size:13px;
+  font-size: 13px;
   font-weight: 500;
 
   &--online {

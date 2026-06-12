@@ -1,61 +1,78 @@
-<script setup lang="ts">
-import type { Server } from '@/types/server'
-import type { MetricPoint } from '@/types/metrics'
+﻿<script setup lang="ts">
+import type { Server, MetricPoint } from '@/entities/server'
+import { getMetricStatusColor } from '@/shared/config/metric'
 
-const props = defineProps<{
-    server: Server
-    metric: MetricPoint | null
-    cpuAlert: boolean
+defineProps<{
+  server: Server
+  metric: MetricPoint | null
+  cpuAlert: boolean
 }>()
 
 const emit = defineEmits<{
-    select: [id: string]
-    delete: [id: string]
+  select: [id: string]
+  delete: [id: string]
 }>()
-
-function cpuColor(cpu: number): string {
-  if (cpu < 60) return '#22c55e'
-  if (cpu <= 85) return '#eab308'
-  return '#ef4444'
-}
-
-function memoryColor(memory: number): string {
-  if (memory < 60) return '#22c55e'
-  if (memory <= 85) return '#eab308'
-  return '#ef4444'
-}
 </script>
 
 <template>
   <div class="card">
-    <button class="card__delete" @click.stop="emit('delete', server.id)">×</button>
-    <div class="card__body" @click="emit('select', server.id)">
-      <h3 class="card__name">{{ server.name }}</h3>
-      <p class="card__ip">{{ server.ip }}</p>
+    <button
+      class="card__delete"
+      @click.stop="emit('delete', server.id)"
+    >
+      ×
+    </button>
+    <div
+      class="card__body"
+      @click="emit('select', server.id)"
+    >
+      <h3 class="card__name">
+        {{ server.name }}
+      </h3>
+      <p class="card__ip">
+        {{ server.ip }}
+      </p>
       <span class="card__type">{{ server.type }}</span>
 
-      <div v-if="metric" class="card__metrics">
+      <div
+        v-if="metric"
+        class="card__metrics"
+      >
         <div class="card__metric">
-          <span class="card__label">CPU</span>
+          <span class="card__label">ЦП</span>
           <span class="card__value">
-            <span class="card__dot" :style="{ background: cpuColor(metric.cpu) }"></span>
+            <span
+              class="card__dot"
+              :style="{ background: getMetricStatusColor(metric.cpu) }"
+            />
             {{ metric.cpu }}%
           </span>
         </div>
         <div class="card__metric">
-          <span class="card__label">RAM</span>
+          <span class="card__label">ОЗУ</span>
           <span class="card__value">
-            <span class="card__dot" :style="{ background: memoryColor(metric.memory) }"></span>
+            <span
+              class="card__dot"
+              :style="{ background: getMetricStatusColor(metric.memory) }"
+            />
             {{ metric.memory }}%
           </span>
         </div>
       </div>
 
-      <div v-else class="card__metrics">
-        <span class="card__waiting">Waiting for data...</span>
+      <div
+        v-else
+        class="card__metrics"
+      >
+        <span class="card__waiting">Ожидание данных...</span>
       </div>
 
-      <div v-if="cpuAlert" class="card__alert"> CPU > 90%</div>
+      <div
+        v-if="cpuAlert"
+        class="card__alert"
+      >
+        ЦП > 90%
+      </div>
     </div>
   </div>
 </template>

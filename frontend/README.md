@@ -1,17 +1,70 @@
-# Server Metrics Dashboard
+# Server Metrics Dashboard — Frontend
 
 Dashboard для мониторинга серверов в реальном времени через WebSocket.
 
 ## Стек
 
-- **Frontend:** Vue 3 + TypeScript + Pinia + Vite + Chart.js
-- **Backend:** FastAPI (Python 3.12+)
+- **Vue 3** (Composition API, `<script setup>`)
+- **TypeScript** (strict mode, без `any`)
+- **Pinia** (управление состоянием)
+- **Vite** (сборка)
+- **Chart.js + vue-chartjs** (графики)
+- **Vitest** (тесты)
+
+---
+
+## Архитектура: Feature-Sliced Design
+
+```
+src/
+├── app/                          — точка входа
+│   ├── App.vue                   — корневой компонент (7 строк)
+│   └── styles/index.css          — глобальные стили
+├── pages/dashboard/              — страница-оркестратор
+│   └── index.vue                 — композиция фич, layout
+├── entities/server/              — бизнес-сущность
+│   ├── model/
+│   │   ├── store.ts              — Pinia store (нормализованные серверы, метрики, алерты)
+│   │   └── types.ts              — Server, MetricPoint, WsEvent
+│   └── ui/
+│       ├── ServerCard.vue        — карточка с цветовой индикацией
+│       ├── ServerList.vue        — грид карточек
+│       └── MetricChart.vue       — график CPU/RAM (Chart.js)
+├── features/                     — изолированные фичи
+│   ├── add-server/ui/ServerForm.vue      — форма с валидацией (name, IPv4, type)
+│   ├── delete-server/ui/ConfirmDeleteModal.vue — подтверждение удаления
+│   └── server-detail/ui/ServerDetailModal.vue  — модалка с графиком
+├── shared/                       — переиспользуемые модули
+│   ├── api/servers.ts            — REST-клиент (fetchServers, createServer, deleteServer)
+│   ├── config/metric.ts          — константы (пороги, цвета, таймауты)
+│   ├── hooks/useMetricsSocket.ts — WebSocket composable (auto-reconnect, pause/resume)
+│   ├── lib/validation.ts         — валидатор IPv4
+│   └── ui/
+│       ├── ModalWrapper.vue      — переиспользуемая Teleport-модалка
+│       └── ConnectionStatus.vue  — индикатор WS (зелёный/красный)
+└── __tests__/
+    └── serverStore.spec.ts       — 6 Vitest-тестов
+```
+
+> Каждый модуль FSD имеет barrel-export (`index.ts`) — импорт через алиас `@/`.
 
 ---
 
 ## Запуск
 
-### Бэкенд
+### Фронтенд (отдельно)
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Открыть `http://localhost:5173`
+
+> Vite проксирует `/api` и `/ws` на `localhost:3001`.
+
+### Бэкенд (отдельно)
 
 ```bash
 cd backend
@@ -21,33 +74,31 @@ uvicorn main:app --reload --port 3001
 
 Swagger: `http://localhost:3001/docs`
 
-### Фронтенд
+### Через mise (оба сразу)
 
 ```bash
-cd frontend\metricDashboard
-npm install
-npm run dev
+mise run dev
 ```
-
-Открыть `http://localhost:5173`
-
-> Vite проксирует `/api` и `/ws` на `localhost:3001`.
 
 ---
 
 ## Тесты
 
 ```bash
-cd frontend\metricDashboard
+cd frontend
 npm test
 ```
 
 6 unit-тестов (Vitest):
-- добавление метрики в store
-- обрезка истории до 30 точек
-- CPU alert при 5 подряд > 90%
-- сброс CPU alert при снижении < 90%
-- сброс alert при удалении сервера
+
+| Тест | Описание |
+|------|----------|
+| `adds a metric point` | Сохранение метрики в store |
+| `truncates history to 30` | 35 вставок → остаётся 30 |
+| `cpuAlert when >90% for >=10s` | 6 метрик подряд >90% → алерт |
+| `clears cpuAlert when cpu drops` | Падение CPU → алерт сбрасывается |
+| `no alert for short spike` | 4 метрики >90% (<10 сек) → алерт НЕ срабатывает |
+| `resets alert on server remove` | Удаление сервера → алерт очищен |
 
 ---
 
@@ -57,33 +108,8 @@ npm test
 |------|----------|
 | **Список серверов** | Карточки с именем, IP, типом, CPU/RAM, цветовой индикатор (< 60% зелёный, 60–85% жёлтый, > 85% красный) |
 | **График** | Клик по карточке — модалка с Chart.js (CPU + RAM, последние 30 точек, обновляется в реальном времени) |
-| **Форма добавления** | Валидация: name 2–30 символов, IPv4, select type (physical/virtual/container) |
-| **WebSocket** | Auto-reconnect 3с, статус подключения в UI, удаление сервера через WS |
-| **Pause / Resume** | Кнопка в хедере — замораживает обновление метрик (удаление серверов продолжает работать) |
-| **CPU Alert** | Если CPU > 90% дольше 10 секунд (5 метрик подряд), на карточке красный бейдж |
-| **Удаление** | Кнопка × на карточке → модалка подтверждения → DELETE запрос |
-
-## Структура фронтенда
-
-```
-frontend\metricDashboard\src\
-├── components/
-│   ├── ConnectionStatus.vue   — индикатор подключения WS
-│   ├── MetricChart.vue        — график CPU + RAM (Chart.js)
-│   ├── ServerCard.vue         — карточка сервера
-│   ├── ServerForm.vue         — форма добавления сервера
-│   └── ServerList.vue         — сетка карточек
-├── composables/
-│   └── useMetricsSocket.ts    — WS composable (connect, reconnect, pause/resume)
-├── store/
-│   └── serverStore.ts         — Pinia store (серверы, метрики, CPU alerts)
-├── types/
-│   ├── metrics.ts             — MetricPoint interface
-│   ├── server.ts              — Server / ServerCreate interfaces
-│   └── ws.ts                  — WsEvent (MetricsEvent | ServerRemoveEvent)
-├── __tests__/
-│   └── serverStore.spec.ts    — Vitest тесты
-├── App.vue                    — корневой компонент
-├── main.ts                    — точка входа
-└── style.css                  — глобальные стили
-```
+| **Форма добавления** | Валидация: name 2–30 символов, IPv4 (октеты 0–255), select type |
+| **WebSocket** | Auto-reconnect 3с, статус в UI, удаление сервера через WS |
+| **Pause / Resume** | Заморозка обновления метрик (удаление продолжает работать) |
+| **CPU Alert** | > 90% дольше 10 секунд → красный бейдж на карточке |
+| **Удаление** | Кнопка × → модалка подтверждения → DELETE /api/servers/{id} |

@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+﻿import { describe, it, expect, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useServerStore } from '@/store/serverStore'
+import { useServerStore } from '@/entities/server'
 
 describe('serverStore', () => {
   beforeEach(() => {
@@ -15,11 +15,11 @@ describe('serverStore', () => {
       memory: 60,
       timestamp: '2024-01-01T00:00:00Z',
     })
-    expect(store.serverMetrics('s1').value).toHaveLength(1)
-    expect(store.serverMetrics('s1').value[0].cpu).toBe(45)
+    expect(store.metricsHistory.get('s1')).toHaveLength(1)
+    expect(store.metricsHistory.get('s1')![0].cpu).toBe(45)
   })
 
-  it('truncates history to 30 points', () => {
+  it('truncates history to MAX_HISTORY_POINTS points', () => {
     const store = useServerStore()
     for (let i = 0; i < 35; i++) {
       store.addMetric({
@@ -29,8 +29,8 @@ describe('serverStore', () => {
         timestamp: '2024-01-01T00:00:00Z',
       })
     }
-    expect(store.serverMetrics('s1').value).toHaveLength(30)
-    expect(store.serverMetrics('s1').value[0].cpu).toBe(5)
+    expect(store.metricsHistory.get('s1')).toHaveLength(30)
+    expect(store.metricsHistory.get('s1')![0].cpu).toBe(5)
   })
 
   it('sets cpuAlert when cpu > 90 for >= 10 seconds', () => {
@@ -44,8 +44,7 @@ describe('serverStore', () => {
         timestamp: new Date(new Date(base).getTime() + i * 2000).toISOString(),
       })
     }
-    // 6 points × 2s = 10s from first to last
-    expect(store.isCpuAlert('s1').value).toBe(true)
+    expect(store.cpuAlerts['s1']).toBe(true)
   })
 
   it('clears cpuAlert when cpu drops below 90 after alert', () => {
@@ -59,7 +58,7 @@ describe('serverStore', () => {
         timestamp: new Date(new Date(base).getTime() + i * 2000).toISOString(),
       })
     }
-    expect(store.isCpuAlert('s1').value).toBe(true)
+    expect(store.cpuAlerts['s1']).toBe(true)
 
     store.addMetric({
       server_id: 's1',
@@ -67,7 +66,7 @@ describe('serverStore', () => {
       memory: 50,
       timestamp: new Date(new Date(base).getTime() + 12000).toISOString(),
     })
-    expect(store.isCpuAlert('s1').value).toBe(false)
+    expect(store.cpuAlerts['s1']).toBe(false)
   })
 
   it('does not set cpuAlert when cpu > 90 for less than 10 seconds', () => {
@@ -81,8 +80,7 @@ describe('serverStore', () => {
         timestamp: new Date(new Date(base).getTime() + i * 2000).toISOString(),
       })
     }
-    // 4 points × 2s = 6s < 10s
-    expect(store.isCpuAlert('s1').value).toBe(false)
+    expect(store.cpuAlerts['s1']).toBe(false)
   })
 
   it('resets cpuAlert on removed server', () => {
@@ -97,8 +95,8 @@ describe('serverStore', () => {
         timestamp: new Date(new Date(base).getTime() + i * 2000).toISOString(),
       })
     }
-    expect(store.isCpuAlert('s1').value).toBe(true)
+    expect(store.cpuAlerts['s1']).toBe(true)
     store.removeServer('s1')
-    expect(store.isCpuAlert('s1').value).toBe(false)
+    expect(store.cpuAlerts['s1']).toBeUndefined()
   })
 })
