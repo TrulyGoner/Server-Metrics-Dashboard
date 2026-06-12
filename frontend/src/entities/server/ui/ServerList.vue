@@ -16,8 +16,8 @@ const emit = defineEmits<{
       v-for="server in store.serverList"
       :key="server.id"
       :server="server"
-      :metric="store.latestMetrics[server.id]"
-      :cpu-alert="store.cpuAlerts[server.id]"
+      :metric="store.latestMetrics[server.id] ?? null"
+      :cpu-alert="store.cpuAlerts[server.id] ?? false"
       @select="emit('select', $event)"
       @delete="emit('delete', $event)"
     />
