@@ -42,9 +42,14 @@ function confirmDelete(id: string): void {
 <template>
   <div class="dashboard">
     <header class="dashboard__header">
-      <h1 class="dashboard__title">Server Metrics</h1>
+      <h1 class="dashboard__title">
+        Server Metrics
+      </h1>
       <div class="dashboard__controls">
-        <button class="dashboard__pause-btn" @click="paused ? resume() : pause()">
+        <button
+          class="dashboard__pause-btn"
+          @click="paused ? resume() : pause()"
+        >
           {{ paused ? '▶ Возобновить' : '⏸ Пауза' }}
         </button>
         <ConnectionStatus :connected="connected" />
@@ -57,7 +62,10 @@ function confirmDelete(id: string): void {
       </aside>
 
       <section class="dashboard__content">
-        <ServerList @select="selectServer" @delete="confirmDelete" />
+        <ServerList
+          @select="selectServer"
+          @delete="confirmDelete"
+        />
       </section>
     </main>
 

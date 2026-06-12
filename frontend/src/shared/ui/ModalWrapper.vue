@@ -11,8 +11,15 @@ const emit = defineEmits<{
 
 <template>
   <Teleport to="body">
-    <div v-if="visible" class="modal" @click.self="emit('close')">
-      <div class="modal__body" :class="{ 'modal__body--small': small }">
+    <div
+      v-if="visible"
+      class="modal"
+      @click.self="emit('close')"
+    >
+      <div
+        class="modal__body"
+        :class="{ 'modal__body--small': small }"
+      >
         <slot />
       </div>
     </div>

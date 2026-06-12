@@ -56,8 +56,13 @@ async function handleSubmit(): Promise<void> {
 </script>
 
 <template>
-  <form class="form" @submit.prevent="handleSubmit">
-    <h2 class="form__title">Добавить сервер</h2>
+  <form
+    class="form"
+    @submit.prevent="handleSubmit"
+  >
+    <h2 class="form__title">
+      Добавить сервер
+    </h2>
 
     <label class="form__field">
       <span class="form__label">Имя</span>
@@ -67,8 +72,11 @@ async function handleSubmit(): Promise<void> {
         :class="{ 'form__input--error': errors.name }"
         placeholder="my-server"
         maxlength="30"
-      />
-      <span v-if="errors.name" class="form__error">{{ errors.name }}</span>
+      >
+      <span
+        v-if="errors.name"
+        class="form__error"
+      >{{ errors.name }}</span>
     </label>
 
     <label class="form__field">
@@ -78,20 +86,30 @@ async function handleSubmit(): Promise<void> {
         class="form__input"
         :class="{ 'form__input--error': errors.ip }"
         placeholder="192.168.1.100"
-      />
-      <span v-if="errors.ip" class="form__error">{{ errors.ip }}</span>
+      >
+      <span
+        v-if="errors.ip"
+        class="form__error"
+      >{{ errors.ip }}</span>
     </label>
 
     <label class="form__field">
       <span class="form__label">Тип</span>
-      <select v-model="form.type" class="form__input">
+      <select
+        v-model="form.type"
+        class="form__input"
+      >
         <option value="physical">Physical</option>
         <option value="virtual">Virtual</option>
         <option value="container">Container</option>
       </select>
     </label>
 
-    <button type="submit" class="form__btn" :disabled="submitting">
+    <button
+      type="submit"
+      class="form__btn"
+      :disabled="submitting"
+    >
       {{ submitting ? 'Создание...' : 'Добавить сервер' }}
     </button>
   </form>

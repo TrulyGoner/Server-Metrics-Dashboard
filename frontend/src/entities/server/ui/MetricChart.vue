@@ -80,7 +80,10 @@ const chartOptions: ChartOptions<'line'> = {
 
 <template>
   <div class="chart">
-    <Line :data="chartData" :options="chartOptions" />
+    <Line
+      :data="chartData"
+      :options="chartOptions"
+    />
   </div>
 </template>
 

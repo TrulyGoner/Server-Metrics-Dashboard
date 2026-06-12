@@ -16,34 +16,63 @@ const emit = defineEmits<{
 
 <template>
   <div class="card">
-    <button class="card__delete" @click.stop="emit('delete', server.id)">×</button>
-    <div class="card__body" @click="emit('select', server.id)">
-      <h3 class="card__name">{{ server.name }}</h3>
-      <p class="card__ip">{{ server.ip }}</p>
+    <button
+      class="card__delete"
+      @click.stop="emit('delete', server.id)"
+    >
+      ×
+    </button>
+    <div
+      class="card__body"
+      @click="emit('select', server.id)"
+    >
+      <h3 class="card__name">
+        {{ server.name }}
+      </h3>
+      <p class="card__ip">
+        {{ server.ip }}
+      </p>
       <span class="card__type">{{ server.type }}</span>
 
-      <div v-if="metric" class="card__metrics">
+      <div
+        v-if="metric"
+        class="card__metrics"
+      >
         <div class="card__metric">
           <span class="card__label">ЦП</span>
           <span class="card__value">
-            <span class="card__dot" :style="{ background: getMetricStatusColor(metric.cpu) }"></span>
+            <span
+              class="card__dot"
+              :style="{ background: getMetricStatusColor(metric.cpu) }"
+            />
             {{ metric.cpu }}%
           </span>
         </div>
         <div class="card__metric">
           <span class="card__label">ОЗУ</span>
           <span class="card__value">
-            <span class="card__dot" :style="{ background: getMetricStatusColor(metric.memory) }"></span>
+            <span
+              class="card__dot"
+              :style="{ background: getMetricStatusColor(metric.memory) }"
+            />
             {{ metric.memory }}%
           </span>
         </div>
       </div>
 
-      <div v-else class="card__metrics">
+      <div
+        v-else
+        class="card__metrics"
+      >
         <span class="card__waiting">Ожидание данных...</span>
       </div>
 
-      <div v-if="cpuAlert" class="card__alert">ЦП > 90%</div>
+      <div
+        v-if="cpuAlert"
+        class="card__alert"
+      >
+        ЦП > 90%
+      </div>
     </div>
   </div>
 </template>

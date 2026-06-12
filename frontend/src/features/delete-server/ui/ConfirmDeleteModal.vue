@@ -42,15 +42,33 @@ defineExpose({ open })
 </script>
 
 <template>
-  <ModalWrapper :visible="isOpen" small @close="close">
-    <h2 class="modal__title">Удалить сервер</h2>
+  <ModalWrapper
+    :visible="isOpen"
+    small
+    @close="close"
+  >
+    <h2 class="modal__title">
+      Удалить сервер
+    </h2>
     <p class="modal__text">
       Вы уверены, что хотите удалить
       <strong>{{ serverName }}</strong>?
     </p>
     <div class="modal__actions">
-      <button class="modal__btn modal__btn--cancel" @click="close" :disabled="isDeleting">Отмена</button>
-      <button class="modal__btn modal__btn--danger" @click="handleDelete" :disabled="isDeleting">Удалить</button>
+      <button
+        class="modal__btn modal__btn--cancel"
+        :disabled="isDeleting"
+        @click="close"
+      >
+        Отмена
+      </button>
+      <button
+        class="modal__btn modal__btn--danger"
+        :disabled="isDeleting"
+        @click="handleDelete"
+      >
+        Удалить
+      </button>
     </div>
   </ModalWrapper>
 </template>

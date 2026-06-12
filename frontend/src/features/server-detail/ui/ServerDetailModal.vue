@@ -21,9 +21,19 @@ const serverName = computed(() => {
 </script>
 
 <template>
-  <ModalWrapper :visible="visible" @close="emit('close')">
-    <button class="modal__close" @click="emit('close')">×</button>
-    <h2 class="modal__title">{{ serverName }}</h2>
+  <ModalWrapper
+    :visible="visible"
+    @close="emit('close')"
+  >
+    <button
+      class="modal__close"
+      @click="emit('close')"
+    >
+      ×
+    </button>
+    <h2 class="modal__title">
+      {{ serverName }}
+    </h2>
     <MetricChart
       v-if="serverId"
       :metrics="store.metricsHistory.get(serverId) ?? []"
