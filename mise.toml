@@ -1,0 +1,29 @@
+[tools]
+python = "3.12"
+node = "22"
+
+[tasks.dev-backend]
+run = "uvicorn main:app --reload --port 3001"
+dir = "backend"
+
+[tasks.dev-frontend]
+run = "npx vite"
+dir = "frontend"
+
+[tasks.dev]
+depends = ["dev-backend", "dev-frontend"]
+
+[tasks.test]
+run = "npm run test"
+dir = "frontend"
+
+[tasks.install-backend]
+run = "pip install -r backend/requirements.txt"
+dir = "."
+
+[tasks.install-frontend]
+run = "npm ci"
+dir = "frontend"
+
+[tasks.install]
+depends = ["install-backend", "install-frontend"]
