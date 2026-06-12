@@ -1,29 +1,17 @@
-<script setup lang="ts">
-import type { Server } from '@/types/server'
-import type { MetricPoint } from '@/types/metrics'
+﻿<script setup lang="ts">
+import type { Server, MetricPoint } from '@/entities/server'
+import { getMetricStatusColor } from '@/shared/config/metric'
 
-const props = defineProps<{
-    server: Server
-    metric: MetricPoint | null
-    cpuAlert: boolean
+defineProps<{
+  server: Server
+  metric: MetricPoint | null
+  cpuAlert: boolean
 }>()
 
 const emit = defineEmits<{
-    select: [id: string]
-    delete: [id: string]
+  select: [id: string]
+  delete: [id: string]
 }>()
-
-function cpuColor(cpu: number): string {
-  if (cpu < 60) return '#22c55e'
-  if (cpu <= 85) return '#eab308'
-  return '#ef4444'
-}
-
-function memoryColor(memory: number): string {
-  if (memory < 60) return '#22c55e'
-  if (memory <= 85) return '#eab308'
-  return '#ef4444'
-}
 </script>
 
 <template>
@@ -36,26 +24,26 @@ function memoryColor(memory: number): string {
 
       <div v-if="metric" class="card__metrics">
         <div class="card__metric">
-          <span class="card__label">CPU</span>
+          <span class="card__label">ЦП</span>
           <span class="card__value">
-            <span class="card__dot" :style="{ background: cpuColor(metric.cpu) }"></span>
+            <span class="card__dot" :style="{ background: getMetricStatusColor(metric.cpu) }"></span>
             {{ metric.cpu }}%
           </span>
         </div>
         <div class="card__metric">
-          <span class="card__label">RAM</span>
+          <span class="card__label">ОЗУ</span>
           <span class="card__value">
-            <span class="card__dot" :style="{ background: memoryColor(metric.memory) }"></span>
+            <span class="card__dot" :style="{ background: getMetricStatusColor(metric.memory) }"></span>
             {{ metric.memory }}%
           </span>
         </div>
       </div>
 
       <div v-else class="card__metrics">
-        <span class="card__waiting">Waiting for data...</span>
+        <span class="card__waiting">Ожидание данных...</span>
       </div>
 
-      <div v-if="cpuAlert" class="card__alert"> CPU > 90%</div>
+      <div v-if="cpuAlert" class="card__alert">ЦП > 90%</div>
     </div>
   </div>
 </template>

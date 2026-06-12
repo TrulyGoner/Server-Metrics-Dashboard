@@ -1,7 +1,9 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref, reactive } from 'vue'
-import type { ServerCreate } from '@/types/server'
-import { useServerStore } from '@/store/serverStore'
+import type { ServerCreate } from '@/entities/server'
+import { useServerStore } from '@/entities/server'
+import { createServer } from '@/shared/api'
+import { validateIp } from '@/shared/lib/validation'
 
 const store = useServerStore()
 
@@ -18,27 +20,18 @@ const errors = reactive<Record<string, string>>({
 
 const submitting = ref(false)
 
-function validateIp(ip: string): boolean {
-  const parts = ip.split('.')
-  if (parts.length !== 4) return false
-  return parts.every(p => {
-    const n = Number(p)
-    return !Number.isNaN(n) && n >= 0 && n <= 255 && p === n.toString()
-  })
-}
-
 function validate(): boolean {
   let valid = true
   errors.name = ''
   errors.ip = ''
 
   if (form.name.length < 2 || form.name.length > 30) {
-    errors.name = 'Name must be 2-30 characters'
+    errors.name = 'Имя должно содержать от 2 до 30 символов'
     valid = false
   }
 
   if (!validateIp(form.ip)) {
-    errors.ip = 'Invalid IPv4 address'
+    errors.ip = 'Неверный IPv4 адрес'
     valid = false
   }
 
@@ -49,13 +42,7 @@ async function handleSubmit(): Promise<void> {
   if (!validate()) return
   submitting.value = true
   try {
-    const res = await fetch('/api/servers', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
-    })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const server = await res.json()
+    const server = await createServer(form)
     store.addServer(server)
     form.name = ''
     form.ip = ''
@@ -70,10 +57,10 @@ async function handleSubmit(): Promise<void> {
 
 <template>
   <form class="form" @submit.prevent="handleSubmit">
-    <h2 class="form__title">Add Server</h2>
+    <h2 class="form__title">Добавить сервер</h2>
 
     <label class="form__field">
-      <span class="form__label">Name</span>
+      <span class="form__label">Имя</span>
       <input
         v-model="form.name"
         class="form__input"
@@ -85,7 +72,7 @@ async function handleSubmit(): Promise<void> {
     </label>
 
     <label class="form__field">
-      <span class="form__label">IP Address</span>
+      <span class="form__label">IP-адрес</span>
       <input
         v-model="form.ip"
         class="form__input"
@@ -96,7 +83,7 @@ async function handleSubmit(): Promise<void> {
     </label>
 
     <label class="form__field">
-      <span class="form__label">Type</span>
+      <span class="form__label">Тип</span>
       <select v-model="form.type" class="form__input">
         <option value="physical">Physical</option>
         <option value="virtual">Virtual</option>
@@ -105,7 +92,7 @@ async function handleSubmit(): Promise<void> {
     </label>
 
     <button type="submit" class="form__btn" :disabled="submitting">
-      {{ submitting ? 'Creating...' : 'Add Server' }}
+      {{ submitting ? 'Создание...' : 'Добавить сервер' }}
     </button>
   </form>
 </template>

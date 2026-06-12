@@ -1,6 +1,7 @@
-import { ref, onUnmounted } from 'vue'
-import type { WsEvent } from '@/types/ws'
-import { useServerStore } from '@/store/serverStore'
+﻿import { ref, onUnmounted } from 'vue'
+import type { WsEvent } from '@/entities/server'
+import { useServerStore } from '@/entities/server'
+import { WS_RECONNECT_DELAY_MS } from '@/shared/config/metric'
 
 export function useMetricsSocket() {
     const connected = ref(false)
@@ -19,7 +20,7 @@ export function useMetricsSocket() {
         ws.onclose = () => {
             connected.value = false
             if (shouldReconnect) {
-                reconnectTimer = setTimeout(connect, 3000)
+                reconnectTimer = setTimeout(connect, WS_RECONNECT_DELAY_MS)
             }
         }
 
@@ -65,5 +66,3 @@ export function useMetricsSocket() {
 
     return { connected, paused, pause, resume }
 }
-    
-

@@ -1,5 +1,5 @@
-<script setup lang="ts">
-import { useServerStore } from '@/store/serverStore'
+﻿<script setup lang="ts">
+import { useServerStore } from '@/entities/server'
 import ServerCard from './ServerCard.vue'
 
 const store = useServerStore()
@@ -16,8 +16,8 @@ const emit = defineEmits<{
       v-for="server in store.serverList"
       :key="server.id"
       :server="server"
-      :metric="store.latestMetric(server.id).value"
-      :cpu-alert="store.isCpuAlert(server.id).value"
+      :metric="store.latestMetrics[server.id]"
+      :cpu-alert="store.cpuAlerts[server.id]"
       @select="emit('select', $event)"
       @delete="emit('delete', $event)"
     />

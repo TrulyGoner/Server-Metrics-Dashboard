@@ -16,11 +16,12 @@ backend/
   requirements.txt   — зависимости Python
 frontend/
   src/
-    types/           — интерфейсы Server, MetricPoint, WsEvent
-    store/           — Pinia store (серверы + история метрик + CPU-алерты)
-    composables/     — useMetricsSocket (WebSocket с auto-reconnect)
-    components/      — ServerCard, ServerList, ServerForm, MetricChart, ConnectionStatus
-    __tests__/       — unit-тесты store (5 тестов)
+    app/             — App.vue + глобальные стили
+    pages/           — DashboardPage (страница-оркестратор)
+    entities/server/ — бизнес-сущность: store, types, UI (Card, List, Chart)
+    features/        — фичи: add-server, delete-server, server-detail
+    shared/          — переиспользуемое: API, хук WS, валидация, UI-кит
+    __tests__/       — unit-тесты store (6 тестов)
   index.html, vite.config.ts, tsconfig*.json
 mise.toml            — конфигурация mise (инструменты + задачи)
 ```
@@ -72,43 +73,65 @@ cd frontend  && npx vite
 
 ## Фронтенд (`frontend/src/`)
 
-### Типы (`types/`)
+Архитектура — **Feature-Sliced Design (FSD)**:
 
-- **`server.ts`** — интерфейсы `Server` (id, name, ip, type) и `ServerCreate`
-- **`metrics.ts`** — интерфейс `MetricPoint` (server_id, cpu, memory, timestamp)
-- **`ws.ts`** — интерфейсы `MetricsEvent`, `ServerRemoveEvent` и объединение `WsEvent`
+```
+src/
+  app/                    — точка входа
+    App.vue               — корневой компонент (рендерит DashboardPage)
+    styles/index.css      — глобальные стили
+  pages/dashboard/        — страница-оркестратор
+  entities/server/        — бизнес-сущность
+    model/store.ts        — Pinia store
+    model/types.ts        — Server, MetricPoint, WsEvent
+    ui/ServerCard.vue, ServerList.vue, MetricChart.vue
+  features/               — изолированные фичи
+    add-server/           — ServerForm.vue (валидация, POST)
+    delete-server/        — ConfirmDeleteModal.vue (подтверждение, DELETE)
+    server-detail/        — ServerDetailModal.vue (модалка с графиком)
+  shared/                 — переиспользуемое
+    api/servers.ts        — REST-клиент
+    config/metric.ts      — константы (пороги, цвета, таймауты)
+    hooks/                — useMetricsSocket (WS с auto-reconnect, pause/resume)
+    lib/validation.ts     — валидатор IPv4
+    ui/ModalWrapper.vue, ConnectionStatus.vue
+  __tests__/serverStore.spec.ts — 6 unit-тестов
+```
 
-### Store (`store/serverStore.ts`)
+### Store (`entities/server/model/store.ts`)
 
 - **`servers`** — `Record<string, Server>` — нормализованное хранение по id
 - **`metricsHistory`** — `Map<string, MetricPoint[]>` — до 30 последних точек на сервер
 - **`cpuAlerts`** — `Record<string, boolean>` — флаг алерта CPU > 90% дольше 10 сек
-- **`serverList`** — `computed` — массив серверов для итерации в шаблоне
-- **`latestMetrics`** — `computed` — последняя метрика для каждого сервера
-- **`addMetric()`** — добавляет точку, обрезает до 30, вычисляет CPU-алерт (считает длительность серии подряд > 90%)
+- **`serverList`** / **`latestMetrics`** — computed для шаблона
+- **`addMetric()`** — добавляет точку, обрезает до 30, вычисляет CPU-алерт
+- **`computeCpuAlert()`** — чистая функция для определения алерта (извлекаема в тесты)
 - **`removeServer()`** — удаляет сервер и его метрики с алертами
 
-### Composable (`composables/useMetricsSocket.ts`)
+### WebSocket (`shared/hooks/useMetricsSocket.ts`)
 
-- Подключается к `ws://<host>/ws`
+- Подключается к `ws://<host>/ws` при монтировании
 - Auto-reconnect через 3 секунды при обрыве
 - Pause/Resume — при паузе метрики не записываются в store
 - Разбирает WsEvent: `metrics` → `store.addMetric()`, `server_removed` → `store.removeServer()`
 - Экспортирует `connected: Ref<boolean>` для UI
 - Автоотключение через `onUnmounted`
 
-### Компоненты
+### UI-компоненты
 
-- **`ServerCard`** — карточка сервера: имя, IP, тип, текущие CPU/RAM с цветовым индикатором (<60% зелёный, 60–85% жёлтый, >85% красный), кнопка удаления, отображение CPU-алерта
-- **`ServerList`** — грид карточек с пробросом событий `select` и `delete`
-- **`ServerForm`** — форма добавления: валидация name (2–30 символов), IPv4 (regex + диапазон), type (select), POST на `/api/servers`
-- **`MetricChart`** — график CPU/RAM (vue-chartjs + Chart.js), последние 30 точек, обновление в реальном времени, открывается в модалке по клику на карточку
-- **`ConnectionStatus`** — индикатор подключения к WebSocket (зелёный/красный)
+- **`ServerCard`** — карточка сервера: имя, IP, тип, CPU/RAM с цветовым индикатором (<60% зелёный, 60–85% жёлтый, >85% красный), CPU-алерт
+- **`ServerList`** — грид карточек с событиями `select` и `delete`
+- **`MetricChart`** — график CPU/RAM (vue-chartjs), последние 30 точек
+- **`ServerForm`** — форма добавления с валидацией (name 2–30, IPv4, type)
+- **`ConfirmDeleteModal`** — модалка подтверждения удаления
+- **`ServerDetailModal`** — модалка с графиком по клику на карточку
+- **`ModalWrapper`** — переиспользуемый Teleport-модал
+- **`ConnectionStatus`** — индикатор подключения WebSocket
 
-### Тесты (`__tests__/serverStore.spec.ts`)
+### Тесты (`__tests__/serverStore.spec.ts`) — 6 тестов
 
-- Добавление метрики в store (проверка сохранения и значения)
-- Обрезка истории до 30 точек (35 вставок → 30 осталось)
+- Добавление метрики в store
+- Обрезка истории до 30 точек (35 вставок → 30)
 - CPU-алерт: >90% в течение 10+ секунд → true
 - CPU-алерт: сброс при падении CPU ниже 90%
 - CPU-алерт: не срабатывает при коротком всплеске (<10 сек)
